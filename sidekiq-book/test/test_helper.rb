@@ -12,6 +12,7 @@ require "rails/test_help"
 require "minitest/autorun"
 require "minitest/mock"
 require "factory_bot"
+require "sidekiq/testing"
 
 class ActiveSupport::TestCase
   include FactoryBot::Syntax::Methods
@@ -24,5 +25,6 @@ class ActiveSupport::TestCase
   # Add more helper methods to be used by all tests here...
   setup do
     Rails.cache.clear
+    Sidekiq::Job.clear_all
   end
 end

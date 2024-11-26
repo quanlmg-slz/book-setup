@@ -12,6 +12,7 @@ services:
       - 3000:3000
     depends_on:
       - db
+      - api
   api:
     build:
       context: ./fake-api-server
@@ -19,8 +20,9 @@ services:
     stdin_open: true
     volumes:
       - ./fake-api-server/:/app/
+    command: bash -c "bin/run"
     ports:
-      - "8888:3000"
+      - 3001:4000
 
   sidekiq:
     build:

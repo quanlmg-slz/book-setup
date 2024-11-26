@@ -17,7 +17,7 @@ class ErrorCatcherServiceWrapperTest < ActiveSupport::TestCase
     mock_net_http = Minitest::Mock.new
 
     mock_net_http_instance = Minitest::Mock.new
-    mock_net_http.expect(:new, mock_net_http_instance,[ "fake-api-server", 4000 ])
+    mock_net_http.expect(:new, mock_net_http_instance,[ "api", 4000 ])
     response = OpenStruct.new(body: "{}", code: "202")
     mock_net_http_instance.expect(:start, response)
 
@@ -34,7 +34,7 @@ class ErrorCatcherServiceWrapperTest < ActiveSupport::TestCase
     mock_net_http = Minitest::Mock.new
 
     mock_net_http_instance = Minitest::Mock.new
-    mock_net_http.expect(:new, mock_net_http_instance,[ "fake-api-server", 4000 ])
+    mock_net_http.expect(:new, mock_net_http_instance,[ "api", 4000 ])
     response = OpenStruct.new(body: "{}", code: "202")
     mock_net_http_instance.expect(:start, response)
 

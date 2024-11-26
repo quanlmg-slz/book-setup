@@ -10,4 +10,3 @@ EXPOSE 4000
 COPY . /app/
 
 RUN bin/setup
-ENTRYPOINT bin/run

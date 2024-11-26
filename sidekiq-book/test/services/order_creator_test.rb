@@ -22,6 +22,10 @@ class OrderCreatorTest < ActiveSupport::TestCase
       user: create(:user)
     )
     resulting_order = @order_creator.create_order(order)
+
+    Sidekiq::Job.drain_all
+    resulting_order.reload
+
     assert_equal order, resulting_order, "should return the same order"
     refute resulting_order.charge_successful
     assert_equal "Insufficient funds", resulting_order.charge_decline_reason
@@ -38,6 +42,10 @@ class OrderCreatorTest < ActiveSupport::TestCase
     )
 
     resulting_order = @order_creator.create_order(order)
+
+    Sidekiq::Job.drain_all
+    resulting_order.reload
+
     assert_equal order, resulting_order, "should return the same order"
     assert resulting_order.charge_successful
     assert_nil resulting_order.charge_decline_reason
