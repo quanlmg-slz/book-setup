@@ -73,6 +73,7 @@ private
     if @config.sleep?
       request_headers["X-Be-Slow"] = @config.sleep.to_s
     end
+    puts request_headers
     request_headers
   end
 

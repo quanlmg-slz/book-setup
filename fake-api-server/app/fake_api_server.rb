@@ -97,6 +97,12 @@ end
 
 $charges = []
 post "/payments/charge" do
+  status_override = if request.env["HTTP_X_CRASH"] == "true" || request.env["X_CRASH"] == "true"
+                      logger.info "Request to crash"
+                      503
+                    else
+                      nil
+                    end
   idempotency_key = @request_payload.dig("metadata","idempotency_key")
   previous_request = if idempotency_key.nil?
                        nil
@@ -106,7 +112,9 @@ post "/payments/charge" do
                          request.dig("response","status") == "success"
                        }
                      end
-  if !previous_request.nil?
+  if status_override
+    halt status_override
+  elsif !previous_request.nil?
     [ 201, [], [ previous_request["response"].to_json ] ]
   elsif @request_payload["amount_cents"] == 99_99
     response = {

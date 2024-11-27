@@ -20,16 +20,12 @@ class OrderCreator
   def complete_order(order)
     payments_response = charge(order)
     if payments_response.success?
-
-      email_response       = send_email(order)
-      fulfillment_response = request_fulfillment(order)
-
       order.update!(
         charge_id: payments_response.charge_id,
         charge_completed_at: Time.zone.now,
-        charge_successful: true,
-        email_id: email_response.email_id,
-        fulfillment_request_id: fulfillment_response.request_id)
+        charge_successful: true
+      )
+      SendOrderNotificationEmailJob.perform_async(order.id)
     else
       order.update!(
         charge_completed_at: Time.zone.now,
@@ -39,16 +35,37 @@ class OrderCreator
     end
   end
 
+  def send_order_notification_email(order)
+    potential_matching_email = email.search_emails(
+      order.email,
+      CONFIRMATION_EMAIL_TEMPLATE_ID
+    )
+    email_response = potiential_matching_email.filter { |email|
+      email.template_data["order_id"] == order.id
+    }
+
+    if email_response.nil?
+      email_response = send_email(order)
+    end
+    order.update!(email_id: email_response.email_id)
+    RequestOrderFulfillmentJob.perform_async(order.id)
+  end
+
+  def request_order_fulfillment(order)
+    fulfillment_response = request_fulfillment(order)
+    order.update!(
+      fulfillment_request_id: fulfillment_response.request_id
+    )
+  end
+
 private
 
   def charge(order)
-    charge_metadata = {}
-    charge_metadata[:order_id] = order.id
-    # If you place idempotency_key into the metadata, it
-    # will pass it to the service.
-    #
-    #   idempotency_key: "idempotency_key-#{order.id}",
-    #
+    charge_metadata = {
+      order_id: order.id,
+      idempotency_key: "idempotency_key-#{order.id}"
+    }
+
     payments.charge(
       order.user.payments_customer_id,
       order.user.payments_payment_method_id,
@@ -69,8 +86,11 @@ private
   end
 
   def request_fulfillment(order)
-    fulfillment_metadata = {}
-    fulfillment_metadata[:order_id] = order.id
+    fulfillment_metadata = {
+      order: order.id,
+      idempotency_key: "idempotency_key-order-#{order.id}"
+    }
+
     fulfillment.request_fulfillment(
       order.user.id,
       order.address,
